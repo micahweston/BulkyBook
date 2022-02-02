@@ -17,18 +17,18 @@
 </div>
 <br /><br />
 
-<table class="table table-hover py-3 m-auto" style="width:80%">
+<table class="table table-striped table-hover py-3 m-auto" style="width:80%">
     <thead>
-        <tr class="table-secondary">
-            <th>Category Name</th>
-            <th>Display Order</th>
+        <tr class="table-primary">
+            <th class="h4">Category Name</th>
+            <th class="h4">Display Order</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
         @foreach(var item in Model)
         {
-            <tr class="table-primary">
+            <tr class="table-dark">
                 <td width="50%">
                     @item.Name
                 </td>
@@ -37,7 +37,7 @@
                 </td>
                 <td width="20%">
                     <div class="w-75 btn-group" role="group">
-                        <a class="btn btn-success" asp-controller="Category" asp-action="Edit" asp-route-id="@item.Id"><i class="bi bi-pencil-square"></i> Edit</a>
+                        <a class="btn btn-primary" asp-controller="Category" asp-action="Edit" asp-route-id="@item.Id"><i class="bi bi-pencil-square"></i> Edit</a>
                         <a class="btn btn-danger" asp-controller="Category" asp-action="Delete" asp-route-id="@item.Id"><i class="bi bi-trash"></i> Delete</a>
                     </div>
                 </td>                  
