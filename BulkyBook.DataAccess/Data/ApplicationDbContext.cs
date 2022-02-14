@@ -12,5 +12,7 @@ namespace BulkyBook.DataAccess
         public DbSet<Category> Categories { get; set; }
         // Creates our database table using our CoverType model
         public DbSet<CoverType> CoverTypes { get; set; }
+        // Creates our database table using our Products model
+        public DbSet<Product> Products { get; set; }
     }
 }

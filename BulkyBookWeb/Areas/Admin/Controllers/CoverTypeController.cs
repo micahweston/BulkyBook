@@ -83,16 +83,16 @@ public class CoverTypeController : Controller
         {
             return NotFound();
         }
-        var categoryFromDB = _unitOfWork.CoverType.GetFirstOrDefault(u => u.Id==id);
+        var coverFromDB = _unitOfWork.CoverType.GetFirstOrDefault(u => u.Id==id);
         //var categoryFromDbFirst = _db.Categories.FirstOrDefault(u=>u.Id == id); //This is the same as before but using FirstOrDefault to through exception if there is more then one. We can use the above because we know that ID is a key so unique.
         //var categoryFromDbSingle = _db.Categories.SingleOrDefault(u => u.Id == id); //Same thing as above but with SingleOrDefault
 
-        if (categoryFromDB == null)
+        if (coverFromDB == null)
         {
             return NotFound();
         }
 
-        return View(categoryFromDB);
+        return View(coverFromDB);
     }
     // Post
     [HttpPost, ActionName("Delete")]
