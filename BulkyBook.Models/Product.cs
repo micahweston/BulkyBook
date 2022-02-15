@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -30,15 +31,18 @@ namespace BulkyBook.Models
         [Required]
         [Range(1, 10000)]
         public double Price100 { get; set; }
+        [ValidateNever]
         public string ImageUrl { get; set; }
         // EF automatically makes CategoryID a foreign key because it is associated with the Category model. This only works because it has Category and Id in the name.
         [Required]
         public int CategoryId { get; set; }
         [ForeignKey("CategoryId")] // This can be done as well if you would like to make sure instead of allowing EF to do it automatically.
+        [ValidateNever]
         public Category Category { get; set; }
         [Required]
         public int CoverTypeId { get; set; }
         [ForeignKey("CoverTypeId")]
+        [ValidateNever]
         public CoverType CoverType { get; set; }
     }
 }
