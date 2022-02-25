@@ -60,15 +60,18 @@ public class ProductController : Controller
         else
         {
             // Update product
+            productVM.Product = _unitOfWork.Product.GetFirstOrDefault(u=>u.Id == id);
+            return View(productVM);
         }
 
-        return View(productVM);
+
     }
     // Post
     [HttpPost]
     [ValidateAntiForgeryToken]
     public IActionResult Upsert(ProductVM obj, IFormFile file)
     {
+        // Because this is a post for update and create there is logic to create a new product, and also to update based on if it is open or not.
         // Server side validation
         if (ModelState.IsValid)
         {
@@ -79,16 +82,35 @@ public class ProductController : Controller
                 var uploads = Path.Combine(wwwRootPath, @"images\products");
                 var extension = Path.GetExtension(file.FileName);
 
+                // Checking to see if there is a old image. If there is we will get the old image path, and delete it before we add the new image.
+                if(obj.Product.ImageUrl != null)
+                {
+                    var oldImagePath = Path.Combine(wwwRootPath, obj.Product.ImageUrl.TrimStart('\\'));
+                    if (System.IO.File.Exists(oldImagePath))
+                    {
+                        System.IO.File.Delete(oldImagePath);
+                    }
+                }
+
+                // Adding a new image
                 using (var fileStreams = new FileStream(Path.Combine(uploads, fileName + extension), FileMode.Create))
                 {
                     file.CopyTo(fileStreams);
                 }
                 obj.Product.ImageUrl = @"\images\products\" + fileName + extension;
             }
-
-            _unitOfWork.Product.Add(obj.Product);
+            // checking to see if the id exists. if it doesn't we use the add method. If it does exist we call the update method.
+            if(obj.Product.Id == 0)
+            {
+                _unitOfWork.Product.Add(obj.Product);
+                TempData["success"] = "Product created successfully";
+            }
+            else
+            {
+                _unitOfWork.Product.Update(obj.Product);
+                TempData["success"] = "Product updated successfully";
+            }
             _unitOfWork.Save();
-            TempData["success"] = "Product created successfully";
             return RedirectToAction("Index");
         }
         return View(obj);
