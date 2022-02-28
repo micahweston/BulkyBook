@@ -116,48 +116,32 @@ public class ProductController : Controller
         return View(obj);
     }
 
-    // Delete GET and POST
-    // Get
-    public IActionResult Delete(int? id)
-    {
-        if (id == null || id == 0)
-        {
-            return NotFound();
-        }
-        var productFromDB = _unitOfWork.Product.GetFirstOrDefault(u => u.Id==id);
-        //var categoryFromDbFirst = _db.Categories.FirstOrDefault(u=>u.Id == id); //This is the same as before but using FirstOrDefault to through exception if there is more then one. We can use the above because we know that ID is a key so unique.
-        //var categoryFromDbSingle = _db.Categories.SingleOrDefault(u => u.Id == id); //Same thing as above but with SingleOrDefault
-
-        if (productFromDB == null)
-        {
-            return NotFound();
-        }
-
-        return View(productFromDB);
-    }
-    // Post
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public IActionResult DeletePOST(int? id)
-    {
-        var obj = _unitOfWork.Product.GetFirstOrDefault(u => u.Id==id);
-        if (obj == null)
-        {
-            return NotFound();
-        }
-
-        _unitOfWork.Product.Remove(obj);
-        _unitOfWork.Save();
-        TempData["success"] = "Product deleted successfully";
-        return RedirectToAction("Index");
-    }
-
     #region API CALLS
     [HttpGet]
     public IActionResult GetAll()
     {
         var productList = _unitOfWork.Product.GetAll(includeProperties:"Category,CoverType");
         return Json(new { data = productList });
+    }
+
+    [HttpDelete]
+    public IActionResult Delete(int? id)
+    {
+        var obj = _unitOfWork.Product.GetFirstOrDefault(u => u.Id == id);
+        if (obj == null)
+        {
+            return Json(new { success = false, message = "Error while deleting" });
+        }
+
+        var oldImagePath = Path.Combine(_hostEnvironment.WebRootPath, obj.ImageUrl.TrimStart('\\'));
+        if (System.IO.File.Exists(oldImagePath))
+        {
+            System.IO.File.Delete(oldImagePath);
+        }
+
+        _unitOfWork.Product.Remove(obj);
+        _unitOfWork.Save();
+        return Json(new { success = true, message = "Delete sucessful" });
     }
     #endregion
 }
