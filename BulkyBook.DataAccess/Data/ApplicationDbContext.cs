@@ -15,5 +15,7 @@ namespace BulkyBook.DataAccess
         public DbSet<CoverType> CoverTypes { get; set; }
         // Creates our database table using our Products model
         public DbSet<Product> Products { get; set; }
+        public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+
     }
 }
