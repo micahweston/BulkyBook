@@ -1,0 +1,72 @@
+﻿@model Company
+
+<!-- asp-action is not needed it will automatically go back to the same post as the title but you can use it if you want to explicatly label it.-->
+<form method="post" asp-action="Upsert" style="width:80%" class="py-3 m-auto" enctype="multipart/form-data">
+    <!-- This is added so that we have access to the ID and ImageURL for updating.-->
+    <input asp-for="Id" hidden/>
+ 
+    <div class="row">
+        <div class="col-10">
+            <div class="row pb-2">
+                <h2 class="text-primary">@(Model.Id!=0?"Update": "Create") Company</h2>
+                <hr />
+            </div>
+            <!-- Built in data validation -->
+            @*<div asp-validation-summary="All"></div>*@
+            <div class="row">
+                <div class="mb-3">
+                    <label asp-for="Name"></label>
+                    <input asp-for="Name" class="form-control"/>
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="StreetAddress"></label>
+                    <input asp-for="StreetAddress" class="form-control"/>
+                    <span asp-validation-for="StreetAddress" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="City"></label>
+                    <input asp-for="City" class="form-control"/>
+                    <span asp-validation-for="City" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="State"></label>
+                    <input asp-for="State" class="form-control"/>
+                    <span asp-validation-for="State" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="PostalCode"></label>
+                    <input asp-for="PostalCode" class="form-control"/>
+                    <span asp-validation-for="PostalCode" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="PhoneNumber"></label>
+                    <input asp-for="PhoneNumber" class="form-control"/>
+                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
+                
+                <div class="col-12">
+                    @if (Model.Id != 0)
+                    {
+                        <button type="submit" class="btn btn-primary" style="width:150px">Update</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-primary" style="width:150px">Create</button>
+                    }
+                    <a asp-controller="Company" asp-action="Index" class="btn btn-outline-secondary text-black" style="width:175px">
+                        Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+
+@section Scripts{
+    @{
+        // This allows for client side validation using the scripts already included. This way we don't hit the server everytime to validate. We still have server side validation as well.
+        <partial name="_ValidationScriptsPartial" />
+    }
+}

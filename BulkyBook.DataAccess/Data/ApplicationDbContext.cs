@@ -16,6 +16,7 @@ namespace BulkyBook.DataAccess
         // Creates our database table using our Products model
         public DbSet<Product> Products { get; set; }
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+        public DbSet<Company> Companies { get; set; }
 
     }
 }
