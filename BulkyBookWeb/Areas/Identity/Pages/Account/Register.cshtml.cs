@@ -119,6 +119,7 @@ namespace BulkyBookWeb.Areas.Identity.Pages.Account
             public string? Role { get; set; }  
             public int? CompanyId { get; set; }
 
+            // This is to allow us to create a enumerable of a select list item to display. Used below in OnGetAsync
             [ValidateNever]
             public IEnumerable<SelectListItem> RoleList { get; set; }
             [ValidateNever]
@@ -170,6 +171,10 @@ namespace BulkyBookWeb.Areas.Identity.Pages.Account
                 user.PostalCode = Input.PostalCode;
                 user.Name = Input.Name;
                 user.PhoneNumber = Input.PhoneNumber;
+                if(Input.Role == SD.Role_User_Comp)
+                {
+                    user.CompanyId = Input.CompanyId;
+                }
 
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
