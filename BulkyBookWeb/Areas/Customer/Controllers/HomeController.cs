@@ -1,7 +1,9 @@
 ﻿using BulkyBook.DataAccess.Repository.iRepository;
 using BulkyBook.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using System.Security.Claims;
 
 namespace BulkyBookWeb.Controllers;
 [Area("Customer")] // is not really needed in .net 6 but it is safe to go ahead and declare the area for the controllers.
@@ -23,15 +25,42 @@ public class HomeController : Controller
         return View(productList);
     }
 
-    public IActionResult Details(int id)
+    public IActionResult Details(int productId)
     {
         ShoppingCart cartObj = new()
         {
             Count = 1,
-            Product = _unitOfWork.Product.GetFirstOrDefault(u => u.Id == id, includeProperties: "Category,CoverType")
+            ProductId = productId,
+            Product = _unitOfWork.Product.GetFirstOrDefault(u => u.Id == productId, includeProperties: "Category,CoverType")
         };
 
         return View(cartObj);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize] // This makes sure that the user is logged in or they cannot access page.
+    public IActionResult Details(ShoppingCart shoppingCart)
+    {
+        var claimsIdentity = (ClaimsIdentity)User.Identity;
+        var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+        shoppingCart.ApplicationUserId = claim.Value;
+
+        ShoppingCart cartFromDb = _unitOfWork.ShoppingCart.GetFirstOrDefault(
+            u=>u.ApplicationUserId== claim.Value && u.ProductId == shoppingCart.ProductId);
+
+        if (cartFromDb == null)
+        {
+            _unitOfWork.ShoppingCart.Add(shoppingCart);
+        }
+        else
+        {
+            // If shopping cart exists we increment the count in the DB
+            _unitOfWork.ShoppingCart.IncrementCount(cartFromDb, shoppingCart.Count);
+        }
+        _unitOfWork.Save();
+
+        return RedirectToAction(nameof(Index)); // Can add a second param to say what contoller to go to.
     }
 
     public IActionResult Privacy()
