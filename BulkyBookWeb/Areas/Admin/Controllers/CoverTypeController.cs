@@ -50,7 +50,7 @@ public class CoverTypeController : Controller
         }
         //var categoryFromDB = _db.Categories.Find(id);
         var coverFromDBFirst = _unitOfWork.CoverType.GetFirstOrDefault(u => u.Id == id); //This is the same as before but using FirstOrDefault to through exception if there is more then one. We can use the above because we know that ID is a key so unique.
-                                                                                            //var categoryFromDbSingle = _db.Categories.SingleOrDefault(u => u.Id == id); //Same thing as above but with SingleOrDefault
+                                                                                         //var categoryFromDbSingle = _db.Categories.SingleOrDefault(u => u.Id == id); //Same thing as above but with SingleOrDefault
 
         if (coverFromDBFirst == null)
         {
