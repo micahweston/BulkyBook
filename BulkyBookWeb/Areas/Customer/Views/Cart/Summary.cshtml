@@ -1,4 +1,6 @@
 ﻿@model BulkyBook.Models.ViewModels.ShoppingCartVM
+@using Microsoft.Extensions.Options
+@inject IOptions<BulkyBook.Utility.StripeSettings> Stripe // This is to inject our API key into the summary page.
 
 <form class="container" method="post">
 	<br />
