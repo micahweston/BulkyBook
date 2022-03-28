@@ -101,6 +101,21 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
                 ShoppingCartVM.OrderHeader.OrderTotal += (cart.Price * cart.Count);
             }
 
+            // Checking if applicationUser is listed with a CompanyID
+            ApplicationUser applicationUser = _unitOfWork.ApplicationUser.GetFirstOrDefault(u => u.Id == claim.Value);
+            if (applicationUser.CompanyId.GetValueOrDefault() == 0)
+            {
+                // if not company set to pending.
+                ShoppingCartVM.OrderHeader.PaymentStatus = SD.PaymentStatusPending;
+                ShoppingCartVM.OrderHeader.OrderStatus= SD.StatusPending;
+            }
+            else
+            {
+                // If apart of a company approved for delayed payment and approval of order.
+                ShoppingCartVM.OrderHeader.PaymentStatus = SD.PaymentStatusDelayedPayment;
+                ShoppingCartVM.OrderHeader.OrderStatus = SD.StatusApproved;
+            }
+
             _unitOfWork.OrderHeader.Add(ShoppingCartVM.OrderHeader);
             _unitOfWork.Save();
 
@@ -118,62 +133,68 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
                 _unitOfWork.Save();
             }
 
-            // Stripe Settings
-            var domain = "https://localhost:44355/";
-            var options = new SessionCreateOptions
+            // if it is not a company then we use strip payment processing. If it is a company we can redirect.
+            if (applicationUser.CompanyId.GetValueOrDefault() == 0)
             {
-                LineItems = new List<SessionLineItemOptions>(),
-                Mode = "payment",
-                SuccessUrl = domain+$"customer/cart/orderConfirmation?id={ShoppingCartVM.OrderHeader.Id}",
-                CancelUrl = domain+$"customer/cart/index",
-             };
-
-            // This is adding each of our items to the sessionLineItemOptions for stripe payment. For each item in the listcart we make a new itemoption.
-            foreach (var item in ShoppingCartVM.ListCart)
-            {
-                var sessionLineItem = new SessionLineItemOptions
+                // Stripe Settings
+                var domain = "https://localhost:44355/";
+                var options = new SessionCreateOptions
                 {
-                    PriceData = new SessionLineItemPriceDataOptions
-                    {
-                        UnitAmount = (long)(item.Price * 100), // 20.00 -> 2000 so price * 100
-                        Currency = "usd",
-                        ProductData = new SessionLineItemPriceDataProductDataOptions
-                        {
-                            Name = item.Product.Title,
-                        },
-                    },
-                    Quantity = item.Count,
+                    LineItems = new List<SessionLineItemOptions>(),
+                    Mode = "payment",
+                    SuccessUrl = domain + $"customer/cart/orderConfirmation?id={ShoppingCartVM.OrderHeader.Id}",
+                    CancelUrl = domain + $"customer/cart/index",
                 };
-                options.LineItems.Add(sessionLineItem);
+
+                // This is adding each of our items to the sessionLineItemOptions for stripe payment. For each item in the listcart we make a new itemoption.
+                foreach (var item in ShoppingCartVM.ListCart)
+                {
+                    var sessionLineItem = new SessionLineItemOptions
+                    {
+                        PriceData = new SessionLineItemPriceDataOptions
+                        {
+                            UnitAmount = (long)(item.Price * 100), // 20.00 -> 2000 so price * 100
+                            Currency = "usd",
+                            ProductData = new SessionLineItemPriceDataProductDataOptions
+                            {
+                                Name = item.Product.Title,
+                            },
+                        },
+                        Quantity = item.Count,
+                    };
+                    options.LineItems.Add(sessionLineItem);
+                }
+
+                var service = new SessionService();
+                Session session = service.Create(options);
+                ShoppingCartVM.OrderHeader.SessionId = session.Id;
+                ShoppingCartVM.OrderHeader.PaymentIntentId = session.PaymentIntentId;
+                _unitOfWork.OrderHeader.UpdateStripePaymentID(ShoppingCartVM.OrderHeader.Id, session.Id, session.PaymentIntentId);
+                _unitOfWork.Save();
+
+                Response.Headers.Add("Location", session.Url);
+                return new StatusCodeResult(303);
             }
-
-            var service = new SessionService();
-            Session session = service.Create(options);
-            ShoppingCartVM.OrderHeader.SessionId = session.Id;
-            ShoppingCartVM.OrderHeader.PaymentIntentId = session.PaymentIntentId;
-            _unitOfWork.OrderHeader.UpdateStripePaymentID(ShoppingCartVM.OrderHeader.Id, session.Id, session.PaymentIntentId);
-            _unitOfWork.Save();
-
-            Response.Headers.Add("Location", session.Url);
-            return new StatusCodeResult(303);
-
-            // Becasue we processed the order we need to remove the order from the DB. 
-            //_unitOfWork.ShoppingCart.RemoveRange(ShoppingCartVM.ListCart);
-            //_unitOfWork.Save();
-
-            //return RedirectToAction("Index", "Home");
+            else
+            {
+                return RedirectToAction("OrderConfirmation", "Cart", new { id = ShoppingCartVM.OrderHeader.Id });
+            }
         }
 
         public IActionResult OrderConfirmation(int id)
         {
             OrderHeader orderHeader = _unitOfWork.OrderHeader.GetFirstOrDefault(u => u.Id == id);
-            var service = new SessionService();
-            Session session = service.Get(orderHeader.SessionId);
-            // Check the stripe status
-            if(session.PaymentStatus.ToLower() == "paid")
+            // if the status is not delayed then check strip for order confirmation. 
+            if (orderHeader.PaymentStatus != SD.PaymentStatusDelayedPayment)
             {
-                _unitOfWork.OrderHeader.UpdateStatus(id, SD.StatusApproved, SD.PaymentStatusApproved);
-                _unitOfWork.Save();
+                var service = new SessionService();
+                Session session = service.Get(orderHeader.SessionId);
+                // Check the stripe status
+                if(session.PaymentStatus.ToLower() == "paid")
+                {
+                    _unitOfWork.OrderHeader.UpdateStatus(id, SD.StatusApproved, SD.PaymentStatusApproved);
+                    _unitOfWork.Save();
+                }
             }
 
             List<ShoppingCart> shoppingCarts = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == 
