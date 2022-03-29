@@ -3,6 +3,7 @@ using BulkyBook.Models;
 using BulkyBook.Models.ViewModels;
 using BulkyBook.Utility;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Stripe.Checkout;
 using System.Security.Claims;
@@ -14,12 +15,14 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
     public class CartController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IEmailSender _emailSender;
         [BindProperty] // This allows us to bind the propterty so that when we POST the form it allows us to use ShoppingCartVM in our Summary or other methods.
         public ShoppingCartVM ShoppingCartVM { get; set; }
         public int OrderTotal { get; set; }
-        public CartController(IUnitOfWork unitOfWork)
+        public CartController(IUnitOfWork unitOfWork, IEmailSender emailSender) 
         {
             _unitOfWork = unitOfWork;
+            _emailSender = emailSender;
         }
 
         public IActionResult Index()
@@ -183,7 +186,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
 
         public IActionResult OrderConfirmation(int id)
         {
-            OrderHeader orderHeader = _unitOfWork.OrderHeader.GetFirstOrDefault(u => u.Id == id);
+            OrderHeader orderHeader = _unitOfWork.OrderHeader.GetFirstOrDefault(u => u.Id == id, includeProperties: "ApplicationUser");
             // if the status is not delayed then check strip for order confirmation. 
             if (orderHeader.PaymentStatus != SD.PaymentStatusDelayedPayment)
             {
@@ -196,7 +199,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
                     _unitOfWork.Save();
                 }
             }
-
+            _emailSender.SendEmailAsync(orderHeader.ApplicationUser.Email, "New Order - Bulky Book", "New Order has been submitted.");
             List<ShoppingCart> shoppingCarts = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == 
             orderHeader.ApplicationUserId).ToList();
             // Becasue we processed the order we need to remove the order from the DB. 
@@ -222,6 +225,8 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
             if(cart.Count <= 1)
             {
                 _unitOfWork.ShoppingCart.Remove(cart);
+                var cnt = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == cart.ApplicationUserId).ToList().Count - 1;
+                HttpContext.Session.SetInt32(SD.SessionCart, cnt);
             }
             else
             {
@@ -238,6 +243,10 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
 
             _unitOfWork.ShoppingCart.Remove(cart);
             _unitOfWork.Save();
+
+            // updating session when cart is removed.
+            var cnt = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == cart.ApplicationUserId).ToList().Count;
+            HttpContext.Session.SetInt32(SD.SessionCart, cnt);
 
             return RedirectToAction(nameof(Index));
         }

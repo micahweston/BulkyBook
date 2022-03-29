@@ -1,10 +1,13 @@
 ﻿using BulkyBook.DataAccess;
 using BulkyBook.DataAccess.Repository.iRepository;
 using BulkyBook.Models;
+using BulkyBook.Utility;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BulkyBookWeb.Controllers;
 [Area("Admin")] // is not really needed in .net 6 but it is safe to go ahead and declare the area for the controllers.
+[Authorize(Roles = SD.Role_Admin)]
 public class CategoryController : Controller
 {
     private readonly IUnitOfWork _unitOfWork;

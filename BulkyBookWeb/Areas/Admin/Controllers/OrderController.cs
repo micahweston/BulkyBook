@@ -110,25 +110,25 @@ namespace BulkyBookWeb.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult UpdateOrderDetail()
         {
-            var orderHEaderFromDb = _unitOfWork.OrderHeader.GetFirstOrDefault(u => u.Id == OrderVM.OrderHeader.Id, tracked: false);
-            orderHEaderFromDb.Name = OrderVM.OrderHeader.Name;
-            orderHEaderFromDb.PhoneNumber = OrderVM.OrderHeader.PhoneNumber;
-            orderHEaderFromDb.StreetNumber = OrderVM.OrderHeader.StreetNumber;
-            orderHEaderFromDb.City = OrderVM.OrderHeader.City;
-            orderHEaderFromDb.State = OrderVM.OrderHeader.State;
-            orderHEaderFromDb.PostalCode = OrderVM.OrderHeader.PostalCode;
+            var orderHeaderFromDb = _unitOfWork.OrderHeader.GetFirstOrDefault(u => u.Id == OrderVM.OrderHeader.Id, tracked: false);
+            orderHeaderFromDb.Name = OrderVM.OrderHeader.Name;
+            orderHeaderFromDb.PhoneNumber = OrderVM.OrderHeader.PhoneNumber;
+            orderHeaderFromDb.StreetNumber = OrderVM.OrderHeader.StreetNumber;
+            orderHeaderFromDb.City = OrderVM.OrderHeader.City;
+            orderHeaderFromDb.State = OrderVM.OrderHeader.State;
+            orderHeaderFromDb.PostalCode = OrderVM.OrderHeader.PostalCode;
             if (OrderVM.OrderHeader.Carrier != null)
             {
-                orderHEaderFromDb.Carrier = OrderVM.OrderHeader.Carrier;
+                orderHeaderFromDb.Carrier = OrderVM.OrderHeader.Carrier;
             }
             if (OrderVM.OrderHeader.TrackingNumber != null)
             {
-                orderHEaderFromDb.TrackingNumber = OrderVM.OrderHeader.TrackingNumber;
+                orderHeaderFromDb.TrackingNumber = OrderVM.OrderHeader.TrackingNumber;
             }
-            _unitOfWork.OrderHeader.Update(orderHEaderFromDb);
+            _unitOfWork.OrderHeader.Update(orderHeaderFromDb);
             _unitOfWork.Save();
             TempData["Success"] = "Order Details Updated Successfully.";
-            return RedirectToAction("Details", "Order", new { orderId = orderHEaderFromDb.Id });
+            return RedirectToAction("Details", "Order", new { orderId = orderHeaderFromDb.Id });
         }
 
         [HttpPost]
@@ -170,6 +170,7 @@ namespace BulkyBookWeb.Areas.Admin.Controllers
             var orderHeader = _unitOfWork.OrderHeader.GetFirstOrDefault(u => u.Id == OrderVM.OrderHeader.Id, tracked: false);
             if (orderHeader.PaymentStatus == SD.PaymentStatusApproved)
             {
+                // refunding with stripe when cancelling order. If payment was already made.
                 var options = new RefundCreateOptions
                 {
                     Reason = RefundReasons.RequestedByCustomer,
@@ -183,6 +184,7 @@ namespace BulkyBookWeb.Areas.Admin.Controllers
             }
             else
             {
+                // If payment was not made already then just change status.
                 _unitOfWork.OrderHeader.UpdateStatus(orderHeader.Id, SD.StatusCancelled, SD.StatusCancelled);
             }
             _unitOfWork.Save();
