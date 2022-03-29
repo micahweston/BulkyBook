@@ -26,6 +26,13 @@ builder.Services.ConfigureApplicationCookie(options => // This handles if the de
     options.LogoutPath = $"/Identity/Account/Logout";
     options.AccessDeniedPath = $"/Identity/Account/AccessDenied";
 });
+builder.Services.AddDistributedMemoryCache(); // Adds a distributed memory cache to the app.
+builder.Services.AddSession(options => // Adds a session to the app.
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(100); // Sets the time that the session can be idle before it expires.
+    options.Cookie.HttpOnly = true; // Sets the cookie to be http only.
+    options.Cookie.IsEssential = true; // Sets the cookie to be essential.
+});
 
 var app = builder.Build();
 
@@ -45,7 +52,7 @@ app.UseRouting();
 StripeConfiguration.ApiKey = builder.Configuration.GetSection("StripeSettings:SecretKey").Get<string>(); // This assigns the global API key in the pipeline
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseSession();
 app.MapRazorPages();
 app.MapControllerRoute(
     name: "default",
