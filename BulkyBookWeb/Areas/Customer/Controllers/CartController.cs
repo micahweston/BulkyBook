@@ -202,6 +202,8 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
             _emailSender.SendEmailAsync(orderHeader.ApplicationUser.Email, "New Order - Bulky Book", "New Order has been submitted.");
             List<ShoppingCart> shoppingCarts = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == 
             orderHeader.ApplicationUserId).ToList();
+            // Need to clear the session after checkout
+            HttpContext.Session.Clear();
             // Becasue we processed the order we need to remove the order from the DB. 
             _unitOfWork.ShoppingCart.RemoveRange(shoppingCarts);
             _unitOfWork.Save();
