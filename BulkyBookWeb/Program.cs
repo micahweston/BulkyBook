@@ -22,6 +22,11 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddSingleton<IEmailSender, EmailSender>();
 builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
+builder.Services.AddAuthentication().AddFacebook(options =>
+{
+    options.AppId = "540312074100006";
+    options.AppSecret = "d9dd4375de7958c578b7b9db5e7ea64f";
+});
 builder.Services.ConfigureApplicationCookie(options => // This handles if the default path for something is wrong. In this case the path for login and logout was just /Account/Login which doesn't work.
 {
     options.LoginPath = $"/Identity/Account/Login";
