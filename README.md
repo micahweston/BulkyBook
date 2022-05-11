@@ -1,7 +1,5 @@
 # BulkyBook
 
-# BulkyBook
-
 ## Description
 
 This is a project that I worked on while taking a Udemy course. This course was covering ASP.NET MVC archetecture. 
